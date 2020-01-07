@@ -1,6 +1,6 @@
 const log = require('fancy-log');
 const express = require('express');
-var Room = require('../manager/room');
+var Room = require('../manager/roomManager');
 
 
 const router = express.Router();
