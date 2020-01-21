@@ -1,21 +1,35 @@
 const log = require('fancy-log');
 const express = require('express');
-var Room = require('../manager/roomManager');
-
+var roomManager = require('../manager/roomManager');
+var mongoose = require('mongoose');
+const Room = require('../models/room');
 
 const router = express.Router();
-var aCode;
-var names = [];
 
-router.get('/makeRoom/:name', async (req, res) => {
-  const { name } = req.params;
-  names.push(name);
+router.post('/makeRoom', async (req, res) => {
+  const { user } = req.body;
+  if (!user) return res.status(400).send('User is requred!');
+
   try {
-    var room = Room.generateAccessCode(); 
-    aCode = room;
+    // const room = new Room({ name, host: req.})
+    const roomAccessCode = roomManager.generateAccessCode(); 
+    const room = new Room({name: roomAccessCode, host: user});
+    await room.save()
 
-    var data = {name, room, "Order": 1};
-    res.status(200).send(data);
+    res.status(200).send(roomAccessCode);
+  } catch (error) {
+    log.error(error);
+    res.sendStatus(500);
+  }
+});
+
+router.get('/:roomId', async (req, res) => {
+  const { roomId } = req.params;
+  try {
+    const room = await Room.find({name: roomId});
+    if (!room) res.status(404).send({ error: 'Not found!' });
+
+    res.status(200).send(room);
   } catch (error) {
     log.error(error);
     res.sendStatus(500);
@@ -37,6 +51,5 @@ router.post('/joinRoom', async(req, res) => {
     res.sendStatus(500);
   }
 });
-
 
 module.exports = router;
